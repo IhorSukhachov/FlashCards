@@ -10,7 +10,22 @@ import SwiftUI
 struct CardView: View {
     let card: Card
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        ZStack {
+            RoundedRectangle(cornerRadius: 25)
+                .fill(.white)
+            VStack {
+                Text(card.prompt)
+                    .font(.largeTitle)
+                    .foregroundStyle(.black)
+                Text(card.answer)
+                    .font(.title)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(20)
+            .multilineTextAlignment(TextAlignment.center)
+                
+        }
+        .frame(width: 450, height: 250)
     }
 }
 
