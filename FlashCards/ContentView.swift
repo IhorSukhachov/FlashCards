@@ -17,7 +17,16 @@ extension View {
 struct ContentView: View {
     @State private var cards = Array<Card>(repeating: .example, count: 10)
     var body: some View {
-        CardView(card: .example)
+        ZStack{
+            VStack{
+                ZStack{
+                    ForEach(0..<cards.count, id: \.self) { index in
+                       CardView(card: cards[index])
+                            .stacked(at: index, in: cards.count)
+                    }
+                }
+            }
+        }
     }
 }
 #Preview {
