@@ -8,7 +8,9 @@
 import SwiftUI
 
 struct CardView: View {
+    @State private var isShowingAnswer: Bool = false
     let card: Card
+    
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 25)
@@ -18,15 +20,20 @@ struct CardView: View {
                 Text(card.prompt)
                     .font(.largeTitle)
                     .foregroundStyle(.black)
-                Text(card.answer)
-                    .font(.title)
-                    .foregroundStyle(.secondary)
+                if isShowingAnswer {
+                    Text(card.answer)
+                        .font(.title)
+                        .foregroundStyle(.secondary)
+                }
             }
             .padding(20)
             .multilineTextAlignment(TextAlignment.center)
                 
         }
         .frame(width: 450, height: 250)
+        .onTapGesture {
+            isShowingAnswer.toggle()
+        }
     }
 }
 
