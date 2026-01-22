@@ -13,6 +13,7 @@ struct CardView: View {
         ZStack {
             RoundedRectangle(cornerRadius: 25)
                 .fill(.white)
+                .shadow(radius: 10 )
             VStack {
                 Text(card.prompt)
                     .font(.largeTitle)
