@@ -19,6 +19,7 @@ struct ContentView: View {
     @Environment(\.accessibilityDifferentiateWithoutColor) var accessibilityDifferentiateWithoutColor
     @Environment(\.accessibilityVoiceOverEnabled) var accessibilityVoiceOverEnabled
     @State private var cards = Array<Card>(repeating: .example, count: 10)
+    @State private var showingEditSheet: Bool = false
     
     @State private var timeRemaining = 100
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -61,6 +62,25 @@ struct ContentView: View {
                         .clipShape(.capsule)
                 }
             }
+            
+            VStack {
+                HStack {
+                    Spacer()
+                    Button {
+                        showingEditSheet = true
+                    } label: {
+                        Image(systemName: "plus.circle ")
+                            .padding()
+                            .background(.black.opacity(0.7))
+                            .clipShape(.circle)
+                    }
+                }
+                Spacer()
+            }
+            .foregroundStyle(.white)
+            .font(.largeTitle)
+            .padding()
+            
             if accessibilityDifferentiateWithoutColor || accessibilityVoiceOverEnabled {
                 VStack {
                     Spacer()
