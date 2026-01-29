@@ -45,6 +45,7 @@ struct ContentView: View {
                             }
                         }
                             .stacked(at: index, in: cards.count)
+                            .allowsHitTesting(index == cards.count - 1)
                             
                     }
                 }
