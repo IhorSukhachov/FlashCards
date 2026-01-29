@@ -17,6 +17,7 @@ extension View {
 
 struct ContentView: View {
     @Environment(\.accessibilityDifferentiateWithoutColor) var accessibilityDifferentiateWithoutColor
+    @Environment(\.accessibilityVoiceOverEnabled) var accessibilityVoiceOverEnabled
     @State private var cards = Array<Card>(repeating: .example, count: 10)
     
     @State private var timeRemaining = 100
@@ -60,7 +61,7 @@ struct ContentView: View {
                         .clipShape(.capsule)
                 }
             }
-            if accessibilityDifferentiateWithoutColor {
+            if accessibilityDifferentiateWithoutColor || accessibilityVoiceOverEnabled {
                 VStack {
                     Spacer()
                     HStack {
@@ -120,6 +121,7 @@ struct ContentView: View {
         }
     }
     func removeCard(at index: Int) {
+        guard index >= 0 else { return }
         cards.remove(at: index)
         if cards.isEmpty {
             isActive = false
