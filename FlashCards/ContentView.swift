@@ -26,7 +26,7 @@ struct ContentView: View {
     @State private var isActive = true
     var body: some View {
         ZStack{
-            Image(.background)
+            Image(decorative: "background")
                 .resizable()
                 .ignoresSafeArea()
             VStack{
