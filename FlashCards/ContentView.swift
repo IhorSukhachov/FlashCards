@@ -64,16 +64,36 @@ struct ContentView: View {
                 VStack {
                     Spacer()
                     HStack {
-                         Image(systemName: "xmark.circle")
-                            .padding()
-                            .background(.black.opacity(0.7))
-                            .clipShape(.circle)
+                        Button {
+                            withAnimation {
+                                removeCard(at: cards.count - 1)
+                            }
+                        } label: {
+                                Image(systemName: "xmark.circle")
+                                   .padding()
+                                   .background(.black.opacity(0.7))
+                                   .clipShape(.circle)
+                            }
+                        .accessibilityLabel("Wrong")
+                        .accessibilityHint("Mark your answer as wrong")
+                        
+
                         Spacer()
                         
-                        Image(systemName: "checkmark.circle")
-                           .padding()
-                           .background(.black.opacity(0.7))
-                           .clipShape(.circle)
+                        Button {
+                            withAnimation {
+                                removeCard(at: cards.count - 1)
+                            }
+                        } label: {
+                            Image(systemName: "checkmark.circle")
+                               .padding()
+                               .background(.black.opacity(0.7))
+                               .clipShape(.circle)
+                            }
+                        .accessibilityLabel("Correct")
+                        .accessibilityHint("Mark your answer as correct")
+                        
+
                     }
                     .foregroundStyle(.white)
                     .font(.largeTitle)
