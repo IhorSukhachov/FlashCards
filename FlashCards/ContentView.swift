@@ -1,12 +1,5 @@
-//
-//  ContentView.swift
-//  FlashCards
-//
-//  Created by Ihor Sukhachov on 22.01.2026.
-//
-
 import SwiftUI
-internal import Combine
+import Combine
 
 extension View {
     func stacked(at position: Int, in total: Int) -> some View {
@@ -18,42 +11,44 @@ extension View {
 struct ContentView: View {
     @Environment(\.accessibilityDifferentiateWithoutColor) var accessibilityDifferentiateWithoutColor
     @Environment(\.accessibilityVoiceOverEnabled) var accessibilityVoiceOverEnabled
+
     @State private var cards = [Card]()
-    @State private var showingEditSheet: Bool = false
-    
+    @State private var showingEditSheet = false
     @State private var timeRemaining = 100
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    
+
     @Environment(\.scenePhase) var scenePhase
     @State private var isActive = true
+
     var body: some View {
-        ZStack{
+        ZStack {
             Image(decorative: "background")
                 .resizable()
                 .ignoresSafeArea()
-            VStack{
+
+            VStack {
                 Text("Time remaining \(timeRemaining)")
                     .font(.largeTitle)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 5)
                     .background(.black.opacity(0.75))
-                    .clipShape(.capsule )
-                ZStack{
-                    ForEach(0..<cards.count, id: \.self) { index in
-                        CardView(card: cards[index]) {
-                            withAnimation {
-                                removeCard(at: index)
-                            }
+                    .clipShape(.capsule)
+
+                ZStack {
+                    ForEach(cards) { card in
+                        let index = cards.firstIndex(of: card) ?? 0
+
+                        CardView(card: card) { isCorrect in
+                            handleAnswer(for: card, correct: isCorrect)
                         }
-                            .stacked(at: index, in: cards.count)
-                            .allowsHitTesting(index == cards.count - 1)
-                            .accessibilityHidden(index < cards.count - 1)
-                            
+                        .stacked(at: index, in: cards.count)
+                        .allowsHitTesting(index == cards.count - 1)
+                        .accessibilityHidden(index < cards.count - 1)
                     }
                 }
                 .allowsHitTesting(timeRemaining > 0)
-                
+
                 if cards.isEmpty {
                     Button("Start again", action: resetCards)
                         .padding()
@@ -62,14 +57,14 @@ struct ContentView: View {
                         .clipShape(.capsule)
                 }
             }
-            
+
             VStack {
                 HStack {
                     Spacer()
                     Button {
                         showingEditSheet = true
                     } label: {
-                        Image(systemName: "plus.circle ")
+                        Image(systemName: "plus.circle")
                             .padding()
                             .background(.black.opacity(0.7))
                             .clipShape(.circle)
@@ -80,41 +75,39 @@ struct ContentView: View {
             .foregroundStyle(.white)
             .font(.largeTitle)
             .padding()
-            
+
+            // Accessibility buttons
             if accessibilityDifferentiateWithoutColor || accessibilityVoiceOverEnabled {
                 VStack {
                     Spacer()
                     HStack {
                         Button {
-                            withAnimation {
-                                removeCard(at: cards.count - 1)
+                            if let card = cards.last {
+                                handleAnswer(for: card, correct: false)
                             }
                         } label: {
-                                Image(systemName: "xmark.circle")
-                                   .padding()
-                                   .background(.black.opacity(0.7))
-                                   .clipShape(.circle)
-                            }
+                            Image(systemName: "xmark.circle")
+                                .padding()
+                                .background(.black.opacity(0.7))
+                                .clipShape(.circle)
+                        }
                         .accessibilityLabel("Wrong")
                         .accessibilityHint("Mark your answer as wrong")
-                        
 
                         Spacer()
-                        
+
                         Button {
-                            withAnimation {
-                                removeCard(at: cards.count - 1)
+                            if let card = cards.last {
+                                handleAnswer(for: card, correct: true)
                             }
                         } label: {
                             Image(systemName: "checkmark.circle")
-                               .padding()
-                               .background(.black.opacity(0.7))
-                               .clipShape(.circle)
-                            }
+                                .padding()
+                                .background(.black.opacity(0.7))
+                                .clipShape(.circle)
+                        }
                         .accessibilityLabel("Correct")
                         .accessibilityHint("Mark your answer as correct")
-                        
-
                     }
                     .foregroundStyle(.white)
                     .font(.largeTitle)
@@ -122,50 +115,53 @@ struct ContentView: View {
                 }
             }
         }
-        .onReceive(timer) { time in
+        .onReceive(timer) { _ in
             guard isActive else { return }
             if timeRemaining > 0 {
                 timeRemaining -= 1
             }
-            
         }
-        .onChange(of: scenePhase) {
-            if scenePhase == .active {
-                if cards.isEmpty == false {
-                    isActive = true
-                }
-              
-            } else {
-                isActive = false
-            }
+        .onChange(of: scenePhase) { phase in
+            isActive = (phase == .active && !cards.isEmpty)
         }
         .sheet(isPresented: $showingEditSheet, onDismiss: resetCards) {
             EditCards()
         }
         .onAppear(perform: resetCards)
     }
-    func removeCard(at index: Int) {
-        guard index >= 0 else { return }
-        cards.remove(at: index)
+
+    // MARK: - Card logic
+
+    func handleAnswer(for card: Card, correct: Bool) {
+        guard let index = cards.firstIndex(of: card) else { return }
+
+       
+            if correct {
+                // Remove correct card
+                cards.remove(at: index)
+            } else {
+                withAnimation {
+                // Wrong → move to bottom
+                let wrongCard = cards.remove(at: index)
+                cards.insert(card, at: 0)
+            }
+        }
+
         if cards.isEmpty {
             isActive = false
         }
     }
-    
+
     func resetCards() {
         timeRemaining = 100
         isActive = true
         loadData()
     }
-    
+
     func loadData() {
-        if let data = UserDefaults.standard.data(forKey: "Cards") {
-            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
-                cards = decoded
-            }
+        if let data = UserDefaults.standard.data(forKey: "Cards"),
+           let decoded = try? JSONDecoder().decode([Card].self, from: data) {
+            cards = decoded
         }
     }
-}
-#Preview {
-    ContentView()
 }
