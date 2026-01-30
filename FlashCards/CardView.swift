@@ -26,7 +26,7 @@ struct CardView: View {
                 .background(
                     accessibilityDifferentiateWithoutColor ? nil :
                     RoundedRectangle(cornerRadius: 25)
-                        .fill(offset.width > 0 ? Color.green : Color.red)
+                        .fill(offset.width == 0 ? Color.clear : offset.width > 0 ? .green : .red)
                 )
                 .shadow(radius: 10 )
             VStack {
