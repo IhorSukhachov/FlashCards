@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct EditCards: View {
     @Environment(\.dismiss) var dismiss
-    @State private var cards = [Card]()
+    @Environment(\.modelContext) var modelContext
+    @Query(sort: \Card.prompt) var cards: [Card]
     
     @State private var newPrompt: String = ""
     @State private var newAnswer: String = ""
@@ -41,25 +43,24 @@ struct EditCards: View {
             .toolbar {
                 Button("Done", action: done)
             }
-            .onAppear(perform: loadData)
         }
     }
     func done() {
         dismiss()
     }
     
-    func loadData() {
-        if let data = UserDefaults.standard.data(forKey: "Cards") {
-            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
-                cards = decoded
-            }
-        }
-    }
-    func saveData() {
-        if let data = try? JSONEncoder().encode(cards) {
-            UserDefaults.standard.set(data, forKey: "Cards")
-        }
-    }
+//    func loadData() {
+//        if let data = UserDefaults.standard.data(forKey: "Cards") {
+//            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
+//                cards = decoded
+//            }
+//        }
+//    }
+//    func saveData() {
+//        if let data = try? JSONEncoder().encode(cards) {
+//            UserDefaults.standard.set(data, forKey: "Cards")
+//        }
+//    }
     func addCard() {
         let trimmedPrompt = newPrompt.trimmingCharacters(in: .whitespaces)
         let trimmedAnswer = newAnswer.trimmingCharacters(in: .whitespaces)
@@ -67,15 +68,13 @@ struct EditCards: View {
             return
         }
         let card = Card(prompt: trimmedPrompt, answer: trimmedAnswer)
-        cards.insert(card, at: 0)
-        saveData()
+        modelContext.insert(card)
         newPrompt = ""
         newAnswer = ""
     }
     
     func removeCards(at offsets: IndexSet) {
-        cards.remove(atOffsets: offsets)
-        saveData()
+        offsets.map { cards[$0] }.forEach { modelContext.delete($0) }
     }
 }
 

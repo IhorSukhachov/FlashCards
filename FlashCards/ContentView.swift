@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import SwiftData
 
 extension View {
     func stacked(at position: Int, in total: Int) -> some View {
@@ -9,10 +10,13 @@ extension View {
 }
 
 struct ContentView: View {
+    @Environment(\.modelContext) var modelContext
     @Environment(\.accessibilityDifferentiateWithoutColor) var accessibilityDifferentiateWithoutColor
     @Environment(\.accessibilityVoiceOverEnabled) var accessibilityVoiceOverEnabled
 
-    @State private var cards = [Card]()
+    @Query(sort: \Card.prompt) var storedCards: [Card] // SwiftData query
+
+    @State private var cards = [Card]() // local array for UI order
     @State private var showingEditSheet = false
     @State private var timeRemaining = 100
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -50,11 +54,15 @@ struct ContentView: View {
                 .allowsHitTesting(timeRemaining > 0)
 
                 if cards.isEmpty {
-                    Button("Start again", action: resetCards)
-                        .padding()
-                        .background(.white)
-                        .foregroundStyle(.black)
-                        .clipShape(.capsule)
+                    Button("Start again") {
+                        loadData()
+                        timeRemaining = 100
+                        isActive = true
+                    }
+                    .padding()
+                    .background(.white)
+                    .foregroundStyle(.black)
+                    .clipShape(.capsule)
                 }
             }
 
@@ -91,8 +99,6 @@ struct ContentView: View {
                                 .background(.black.opacity(0.7))
                                 .clipShape(.circle)
                         }
-                        .accessibilityLabel("Wrong")
-                        .accessibilityHint("Mark your answer as wrong")
 
                         Spacer()
 
@@ -106,8 +112,6 @@ struct ContentView: View {
                                 .background(.black.opacity(0.7))
                                 .clipShape(.circle)
                         }
-                        .accessibilityLabel("Correct")
-                        .accessibilityHint("Mark your answer as correct")
                     }
                     .foregroundStyle(.white)
                     .font(.largeTitle)
@@ -117,17 +121,15 @@ struct ContentView: View {
         }
         .onReceive(timer) { _ in
             guard isActive else { return }
-            if timeRemaining > 0 {
-                timeRemaining -= 1
-            }
+            if timeRemaining > 0 { timeRemaining -= 1 }
         }
         .onChange(of: scenePhase) { phase in
             isActive = (phase == .active && !cards.isEmpty)
         }
-        .sheet(isPresented: $showingEditSheet, onDismiss: resetCards) {
+        .sheet(isPresented: $showingEditSheet, onDismiss: loadData) {
             EditCards()
         }
-        .onAppear(perform: resetCards)
+        .onAppear(perform: loadData)
     }
 
     // MARK: - Card logic
@@ -135,33 +137,23 @@ struct ContentView: View {
     func handleAnswer(for card: Card, correct: Bool) {
         guard let index = cards.firstIndex(of: card) else { return }
 
-       
-            if correct {
-                // Remove correct card
-                cards.remove(at: index)
-            } else {
-                withAnimation {
-                // Wrong → move to bottom
-                let wrongCard = cards.remove(at: index)
-                cards.insert(card, at: 0)
-            }
+        if correct {
+            // Remove correct card from SwiftData and local array
+            modelContext.delete(card)
+            cards.remove(at: index)
+        } else {
+            // Wrong → move to bottom visually
+            let wrongCard = cards.remove(at: index)
+            cards.append(wrongCard)
         }
 
-        if cards.isEmpty {
-            isActive = false
-        }
-    }
-
-    func resetCards() {
-        timeRemaining = 100
-        isActive = true
-        loadData()
+        if cards.isEmpty { isActive = false }
     }
 
     func loadData() {
-        if let data = UserDefaults.standard.data(forKey: "Cards"),
-           let decoded = try? JSONDecoder().decode([Card].self, from: data) {
-            cards = decoded
-        }
+        // Load SwiftData cards into local array
+        cards = storedCards
+        timeRemaining = 100
+        isActive = !cards.isEmpty
     }
 }
