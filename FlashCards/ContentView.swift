@@ -144,7 +144,7 @@ struct ContentView: View {
         } else {
             // Wrong → move to bottom visually
             let wrongCard = cards.remove(at: index)
-            cards.append(wrongCard)
+            cards.insert(wrongCard, at: 0)
         }
 
         if cards.isEmpty { isActive = false }
